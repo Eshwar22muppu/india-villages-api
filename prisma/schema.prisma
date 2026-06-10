@@ -1,0 +1,79 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id     Int     @id @default(autoincrement())
+  name   String
+  code   String  @unique
+  states State[]
+}
+
+model State {
+  id        Int        @id @default(autoincrement())
+  code      String     @unique
+  name      String
+  countryId Int
+  country   Country    @relation(fields: [countryId], references: [id])
+  districts District[]
+}
+
+model District {
+  id           Int           @id @default(autoincrement())
+  code         String
+  name         String
+  stateId      Int
+  state        State         @relation(fields: [stateId], references: [id])
+  subDistricts SubDistrict[]
+}
+
+model SubDistrict {
+  id         Int       @id @default(autoincrement())
+  code       String
+  name       String
+  districtId Int
+  district   District  @relation(fields: [districtId], references: [id])
+  villages   Village[]
+}
+
+model Village {
+  id            Int         @id @default(autoincrement())
+  code          String
+  name          String
+  subDistrictId Int
+  subDistrict   SubDistrict @relation(fields: [subDistrictId], references: [id])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  planType  String   @default("free")
+  apiKeys   ApiKey[]
+  createdAt DateTime @default(now())
+}
+
+model ApiKey {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique
+  secretHash String
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  apiLogs    ApiLog[]
+  createdAt  DateTime @default(now())
+}
+
+model ApiLog {
+  id           Int      @id @default(autoincrement())
+  endpoint     String
+  statusCode   Int
+  responseTime Int
+  apiKeyId     Int
+  apiKey       ApiKey   @relation(fields: [apiKeyId], references: [id])
+  createdAt    DateTime @default(now())
+}
